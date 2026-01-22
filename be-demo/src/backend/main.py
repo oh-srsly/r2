@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from starlette.types import HTTPExceptionHandler
 
 from backend.models import LoginResponse, LoginRequest
-from backend.utils import is_valid_email, validate_password
+from backend.utils import is_valid_email, validate_password, generate_and_store_auth_token
 
 app = FastAPI()
 
@@ -16,7 +16,8 @@ async def login(payload: LoginRequest):
         normalized_email = is_valid_email(payload.email)
         if not validate_password(normalized_email, payload.password):
             raise HTTPException(status_code=401, detail="Invalid password")
-        return LoginResponse(token="MOCK_TOKEN")
+        token = generate_and_store_auth_token()
+        return LoginResponse(token=token)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
