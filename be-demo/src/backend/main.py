@@ -22,7 +22,7 @@ async def login(payload: LoginRequest):
     :raises HTTPException:
     :param payload:
     :type payload: LoginRequest
-    :return:
+    :return: LoginResponse
     """
     try:
         try:
