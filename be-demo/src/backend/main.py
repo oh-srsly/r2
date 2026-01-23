@@ -55,6 +55,8 @@ async def login(payload: LoginRequest) -> LoginResponse:
         persistence.add_token(token)
         return LoginResponse(token=token)
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
