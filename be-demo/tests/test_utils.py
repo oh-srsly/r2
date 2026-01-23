@@ -1,5 +1,5 @@
 import unittest
-from backend.utils import is_valid_email
+from backend.services import validate_email
 from email_validator import EmailNotValidError
 
 class TestEmailValidator(unittest.TestCase):
@@ -8,7 +8,7 @@ class TestEmailValidator(unittest.TestCase):
         """
         Tests a valid email address.
         """
-        email = is_valid_email("test@example.com")
+        email = validate_email("test@example.com")
         self.assertEqual(email, "test@example.com")
 
     def test_invalid_email(self):
@@ -16,20 +16,20 @@ class TestEmailValidator(unittest.TestCase):
         Tests an invalid email address.
         """
         with self.assertRaises(EmailNotValidError):
-            is_valid_email("invalid-email")
+            validate_email("invalid-email")
 
     def test_email_with_whitespace(self):
         """
         Tests an email address with leading/trailing whitespace.
         """
         with self.assertRaises(EmailNotValidError):
-            is_valid_email("  test@example.com  ")
+            validate_email("  test@example.com  ")
 
     def test_email_with_subdomain(self):
         """
         Tests an email address with a subdomain.
         """
-        email = is_valid_email("test@mail.example.com")
+        email = validate_email("test@mail.example.com")
         self.assertEqual(email, "test@mail.example.com")
 
     def test_empty_email(self):
@@ -37,7 +37,7 @@ class TestEmailValidator(unittest.TestCase):
         Tests an empty string as an email.
         """
         with self.assertRaises(EmailNotValidError):
-            is_valid_email("")
+            validate_email("")
 
 if __name__ == '__main__':
     unittest.main()

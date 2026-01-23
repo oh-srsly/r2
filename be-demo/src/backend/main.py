@@ -1,8 +1,13 @@
+from email_validator import EmailNotValidError
 from fastapi import FastAPI, HTTPException
 from starlette.types import HTTPExceptionHandler
 
 from backend.models import LoginResponse, LoginRequest
-from backend.utils import is_valid_email, validate_password, generate_and_store_auth_token
+from backend.persistence import Persistence
+from backend.services import validate_email, validate_password, generate_auth_token
+
+
+persistence = Persistence()
 
 app = FastAPI()
 
@@ -12,19 +17,33 @@ async def health_check():
 
 @app.post("/api/login", response_model=LoginResponse)
 async def login(payload: LoginRequest):
+    """
+    Attempts login; returns token or raises HTTP error
+    :raises HTTPException:
+    :param payload:
+    :type payload: LoginRequest
+    :return:
+    """
     try:
-        normalized_email = is_valid_email(payload.email)
+        try:
+            normalized_email = validate_email(payload.email)
+        except EmailNotValidError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
         if not validate_password(normalized_email, payload.password):
             raise HTTPException(status_code=401, detail="Invalid password")
-        token = generate_and_store_auth_token()
+
+        token = generate_auth_token()
+        persistence.add_token(token)
         return LoginResponse(token=token)
+
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/logout")
-async def health_check():
+async def logout():
     return {"status": "ok"}
 
 @app.get("/api/try_luck")
-async def health_check():
+async def try_luck():
     return {"win": True}
