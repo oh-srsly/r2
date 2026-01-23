@@ -21,8 +21,7 @@ class TestPersistence(unittest.TestCase):
         self.assertFalse(self.persistence.contains_token("token2"))
 
     def test_remove_non_existent_token(self):
-        with self.assertRaises(KeyError):
-            self.persistence.remove_token("non_existent_token")
+        self.assertFalse(self.persistence.remove_token("non_existent_token"))
 
 if __name__ == '__main__':
     unittest.main()
