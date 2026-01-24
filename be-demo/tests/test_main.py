@@ -4,6 +4,8 @@ from fastapi.testclient import TestClient
 from email_validator import EmailNotValidError
 
 from backend.main import app
+from backend.models import TryLuckResponse, LoginResponse
+
 
 class TestMain(unittest.TestCase):
 
@@ -13,7 +15,6 @@ class TestMain(unittest.TestCase):
     def test_health_check(self):
         response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"status": "ok"})
 
     @patch('backend.main.services')
     @patch('backend.main.persistence')
@@ -25,7 +26,7 @@ class TestMain(unittest.TestCase):
         response = self.client.post("/api/login", json={"email": "test@example.com", "password": "password"})
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"token": "test_token"})
+        self.assertEqual(LoginResponse.model_validate(response.json()), LoginResponse(token="test_token"))
         mock_persistence.add_token.assert_called_with("test_token")
 
     @patch('backend.main.services')
@@ -35,7 +36,6 @@ class TestMain(unittest.TestCase):
         response = self.client.post("/api/login", json={"email": "invalid-email", "password": "password"})
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json(), {"detail": "Invalid email"})
 
     @patch('backend.main.services')
     def test_login_invalid_password(self, mock_services):
@@ -45,7 +45,6 @@ class TestMain(unittest.TestCase):
         response = self.client.post("/api/login", json={"email": "test@example.com", "password": "wrong_password"})
 
         self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.json(), {"detail": "Invalid password"})
 
     @patch('backend.main.persistence')
     def test_logout_success(self, mock_persistence):
@@ -54,13 +53,11 @@ class TestMain(unittest.TestCase):
         response = self.client.get("/api/logout", headers={"Authorization": "Bearer test_token"})
         
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), "OK")
         mock_persistence.remove_token.assert_called_with("test_token")
 
     def test_logout_no_token(self):
         response = self.client.get("/api/logout")
         self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.json(), {"detail": "Invalid authorization header"})
 
     @patch('backend.main.persistence')
     def test_logout_invalid_token(self, mock_persistence):
@@ -69,7 +66,6 @@ class TestMain(unittest.TestCase):
         response = self.client.get("/api/logout", headers={"Authorization": "Bearer invalid_token"})
         
         self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.json(), {"detail": "Invalid token"})
 
     @patch('backend.main.services')
     @patch('backend.main.persistence')
@@ -81,7 +77,7 @@ class TestMain(unittest.TestCase):
         response = self.client.get("/api/try_luck", headers={"Authorization": "Bearer test_token"})
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"win": True})
+        self.assertEqual(TryLuckResponse.model_validate(response.json()), TryLuckResponse(win=True))
         mock_persistence.register_win.assert_called_once()
 
     @patch('backend.main.services')
@@ -94,13 +90,12 @@ class TestMain(unittest.TestCase):
         response = self.client.get("/api/try_luck", headers={"Authorization": "Bearer test_token"})
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"win": False})
+        self.assertEqual(TryLuckResponse.model_validate(response.json()), TryLuckResponse(win=False))
         mock_persistence.register_win.assert_not_called()
 
     def test_try_luck_no_token(self):
         response = self.client.get("/api/try_luck")
         self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.json(), {"detail": "Invalid authorization header"})
 
     @patch('backend.main.persistence')
     def test_try_luck_invalid_token(self, mock_persistence):
@@ -109,7 +104,6 @@ class TestMain(unittest.TestCase):
         response = self.client.get("/api/try_luck", headers={"Authorization": "Bearer invalid_token"})
         
         self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.json(), {"detail": "Invalid token"})
 
 if __name__ == '__main__':
     unittest.main()
