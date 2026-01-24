@@ -1,28 +1,51 @@
 name: Python CI
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
 
-    - name: Install dependencies
-      working-directory: ./be-demo
-      run: |
-        python -m venv venv
-        source venv/bin/activate
-        pip install -r requirements.txt
+      - name: Install dependencies
+        working-directory: ./be-demo
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
 
-    - name: Run tests
-      working-directory: ./be-demo
-      run: |
-        source venv/bin/activate
-        PYTHONPATH=src python -m unittest discover tests
+      - name: Linter (ruff)
+        working-directory: ./be-demo
+        run: |
+          source venv/bin/activate
+          pip install ruff
+          ruff check .
+          ruff format .
+
+      - name: Formatter (ruff)
+        working-directory: ./be-demo
+        run: |
+          source venv/bin/activate
+          pip install ruff
+          ruff check .
+          ruff format .
+
+      - name: Static type checker (ty)
+        working-directory: ./be-demo
+        run: |
+          source venv/bin/activate
+          pip install ty
+          ty check
+
+      - name: Unit tests
+        working-directory: ./be-demo
+        run: |
+          source venv/bin/activate
+          PYTHONPATH=src python -m unittest discover tests
