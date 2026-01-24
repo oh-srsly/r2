@@ -2,8 +2,8 @@ import unittest
 from backend.services import validate_email
 from email_validator import EmailNotValidError
 
-class TestEmailValidator(unittest.TestCase):
 
+class TestEmailValidator(unittest.TestCase):
     def test_valid_email(self):
         """
         Tests a valid email address.
@@ -39,5 +39,6 @@ class TestEmailValidator(unittest.TestCase):
         with self.assertRaises(EmailNotValidError):
             validate_email("")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

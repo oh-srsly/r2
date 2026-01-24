@@ -10,6 +10,7 @@ persistence = Persistence()
 
 app = FastAPI()
 
+
 def validate_auth(request: Request) -> str:
     """
     :param request: The incoming HTTP request object containing the headers.
@@ -29,9 +30,11 @@ def validate_auth(request: Request) -> str:
         raise HTTPException(status_code=401, detail="Invalid token")
     return token
 
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
 
 @app.post("/api/login", response_model=LoginResponse)
 async def login(payload: LoginRequest) -> LoginResponse:
@@ -60,6 +63,7 @@ async def login(payload: LoginRequest) -> LoginResponse:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/logout", response_model=str)
 async def logout(request: Request) -> str:
     """
@@ -72,6 +76,7 @@ async def logout(request: Request) -> str:
     token: str = validate_auth(request)
     persistence.remove_token(token)
     return "OK"
+
 
 @app.get("/api/try_luck", response_model=TryLuckResponse)
 async def try_luck(request: Request) -> TryLuckResponse:

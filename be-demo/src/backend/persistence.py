@@ -5,8 +5,8 @@ from collections import defaultdict
 logger = logging.getLogger(__name__)
 DAY_CHANGE_TIMEZONE: tzinfo = timezone.utc
 
-class Persistence:
 
+class Persistence:
     def __init__(self):
         self._sessions: set[str] = set()
         self._timezone: tzinfo = DAY_CHANGE_TIMEZONE
@@ -30,8 +30,7 @@ class Persistence:
         return datetime.now(tz=self._timezone).date()
 
     def get_today_wins(self) -> int:
-        
         return self._daily_wins.get(self._today(), 0)
-    
+
     def register_win(self) -> None:
         self._daily_wins[self._today()] += 1

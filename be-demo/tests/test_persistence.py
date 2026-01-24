@@ -1,8 +1,8 @@
 import unittest
 from backend.persistence import Persistence
 
-class TestPersistence(unittest.TestCase):
 
+class TestPersistence(unittest.TestCase):
     def setUp(self):
         self.persistence = Persistence()
 
@@ -23,5 +23,6 @@ class TestPersistence(unittest.TestCase):
     def test_remove_non_existent_token(self):
         self.assertFalse(self.persistence.remove_token("non_existent_token"))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -7,6 +7,7 @@ HIGH_WIN_RATE = 0.7
 REDUCED_WIN_RATE = 0.4
 WIN_RATE_REDUCTION_THRESHOLD = 30  # number of wins at the high rate
 
+
 def validate_email(email: str) -> str:
     """
     Validates an email address using the email-validator library.
@@ -14,7 +15,9 @@ def validate_email(email: str) -> str:
     """
     try:
         # Validate the email address and get its normalized form
-        validated = email_validator.validate_email(email, check_deliverability=False)  # Set check_deliverability=True for DNS checks
+        validated = email_validator.validate_email(
+            email, check_deliverability=False
+        )  # Set check_deliverability=True for DNS checks
         email_address = validated.normalized  # Use the normalized email address
         return email_address
     except email_validator.EmailNotValidError as e:
