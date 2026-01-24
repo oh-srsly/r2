@@ -8,4 +8,4 @@ class LoginResponse(BaseModel):
     token: str
 
 class TryLuckResponse(BaseModel):
-    win: str
+    win: bool

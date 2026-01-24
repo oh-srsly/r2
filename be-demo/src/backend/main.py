@@ -1,7 +1,7 @@
 from email_validator import EmailNotValidError
 from fastapi import FastAPI, HTTPException, Request
 
-from backend.models import LoginResponse, LoginRequest
+from backend.models import LoginResponse, LoginRequest, TryLuckResponse
 from backend.persistence import Persistence
 import backend.services as services
 
@@ -73,15 +73,16 @@ async def logout(request: Request) -> str:
     persistence.remove_token(token)
     return "OK"
 
-@app.get("/api/try_luck", response_model=dict[str, bool])
-async def try_luck(request: Request) -> dict:
+@app.get("/api/try_luck", response_model=TryLuckResponse)
+async def try_luck(request: Request) -> TryLuckResponse:
     """
-    Attempts to win a prize; returns win status
-    :return: dict[str, bool]
+    Attempts to win a prize
+    :return: the win status
+    :rtype: TryLuckResponse
     """
     validate_auth(request)
     if services.try_luck(persistence.get_today_wins()):
         persistence.register_win()
-        return {"win": True}
+        return TryLuckResponse(win=True)
     else:
-        return {"win": False}
+        return TryLuckResponse(win=False)
