@@ -64,7 +64,7 @@ async def login(payload: LoginRequest) -> LoginResponse:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/logout", response_model=str)
+@app.post("/api/logout", response_model=str)
 async def logout(request: Request) -> str:
     """
     Log out user by invalidating the session token
@@ -78,7 +78,7 @@ async def logout(request: Request) -> str:
     return "OK"
 
 
-@app.get("/api/try_luck", response_model=TryLuckResponse)
+@app.post("/api/try_luck", response_model=TryLuckResponse)
 async def try_luck(request: Request) -> TryLuckResponse:
     """
     Attempts to win a prize

@@ -59,7 +59,7 @@ class TestMain(unittest.TestCase):
     def test_logout_success(self, mock_persistence):
         mock_persistence.contains_token.return_value = True
 
-        response = self.client.get(
+        response = self.client.post(
             "/api/logout", headers={"Authorization": "Bearer test_token"}
         )
 
@@ -67,14 +67,14 @@ class TestMain(unittest.TestCase):
         mock_persistence.remove_token.assert_called_with("test_token")
 
     def test_logout_no_token(self):
-        response = self.client.get("/api/logout")
+        response = self.client.post("/api/logout")
         self.assertEqual(response.status_code, 401)
 
     @patch("backend.main.persistence")
     def test_logout_invalid_token(self, mock_persistence):
         mock_persistence.contains_token.return_value = False
 
-        response = self.client.get(
+        response = self.client.post(
             "/api/logout", headers={"Authorization": "Bearer invalid_token"}
         )
 
@@ -87,7 +87,7 @@ class TestMain(unittest.TestCase):
         mock_persistence.get_today_wins.return_value = 0
         mock_services.try_luck.return_value = True
 
-        response = self.client.get(
+        response = self.client.post(
             "/api/try_luck", headers={"Authorization": "Bearer test_token"}
         )
 
@@ -104,7 +104,7 @@ class TestMain(unittest.TestCase):
         mock_persistence.get_today_wins.return_value = 10
         mock_services.try_luck.return_value = False
 
-        response = self.client.get(
+        response = self.client.post(
             "/api/try_luck", headers={"Authorization": "Bearer test_token"}
         )
 
@@ -115,14 +115,14 @@ class TestMain(unittest.TestCase):
         mock_persistence.register_win.assert_not_called()
 
     def test_try_luck_no_token(self):
-        response = self.client.get("/api/try_luck")
+        response = self.client.post("/api/try_luck")
         self.assertEqual(response.status_code, 401)
 
     @patch("backend.main.persistence")
     def test_try_luck_invalid_token(self, mock_persistence):
         mock_persistence.contains_token.return_value = False
 
-        response = self.client.get(
+        response = self.client.post(
             "/api/try_luck", headers={"Authorization": "Bearer invalid_token"}
         )
 
