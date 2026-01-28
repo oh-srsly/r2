@@ -1,10 +1,10 @@
 use chrono::Local;
-use deadpool_redis::redis::AsyncCommands;
 use rand::Rng;
 use salvo::prelude::*;
 use uuid::Uuid;
 
 use crate::models::{ErrorResponse, LoginRequest, LoginResponse, TryLuckResponse};
+use crate::redis_store::{self, RedisError};
 use crate::state::AppState;
 
 #[handler]
@@ -39,22 +39,16 @@ pub async fn login(req: &mut Request, dep: &mut Depot, res: &mut Response) {
 
     let token = Uuid::new_v4().to_string();
 
-    let mut conn = match state.redis_pool.get().await {
+    let mut conn = match redis_store::get_connection(&state.redis_pool).await {
         Ok(c) => c,
-        Err(_) => {
-            res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-            res.render(Json(ErrorResponse {
-                error: "Redis unavailable".into(),
-            }));
+        Err(err) => {
+            render_redis_error(res, err);
             return;
         }
     };
 
-    if let Err(_) = conn.sadd::<_, _, i32>("active_tokens", &token).await {
-        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-        res.render(Json(ErrorResponse {
-            error: "Redis error".into(),
-        }));
+    if let Err(err) = redis_store::add_active_token(&mut conn, &token).await {
+        render_redis_error(res, err);
         return;
     }
 
@@ -76,24 +70,18 @@ pub async fn logout(req: &mut Request, dep: &mut Depot, res: &mut Response) {
         }
     };
 
-    let mut conn = match state.redis_pool.get().await {
+    let mut conn = match redis_store::get_connection(&state.redis_pool).await {
         Ok(c) => c,
-        Err(_) => {
-            res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-            res.render(Json(ErrorResponse {
-                error: "Redis unavailable".into(),
-            }));
+        Err(err) => {
+            render_redis_error(res, err);
             return;
         }
     };
 
-    let removed: i32 = match conn.srem("active_tokens", &token).await {
+    let removed: i32 = match redis_store::remove_active_token(&mut conn, &token).await {
         Ok(r) => r,
-        Err(_) => {
-            res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-            res.render(Json(ErrorResponse {
-                error: "Redis error".into(),
-            }));
+        Err(err) => {
+            render_redis_error(res, err);
             return;
         }
     };
@@ -124,24 +112,18 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
         }
     };
 
-    let mut conn = match state.redis_pool.get().await {
+    let mut conn = match redis_store::get_connection(&state.redis_pool).await {
         Ok(c) => c,
-        Err(_) => {
-            res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-            res.render(Json(ErrorResponse {
-                error: "Redis unavailable".into(),
-            }));
+        Err(err) => {
+            render_redis_error(res, err);
             return;
         }
     };
 
-    let is_member: bool = match conn.sismember("active_tokens", &token).await {
+    let is_member: bool = match redis_store::is_active_token(&mut conn, &token).await {
         Ok(v) => v,
-        Err(_) => {
-            res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-            res.render(Json(ErrorResponse {
-                error: "Redis error".into(),
-            }));
+        Err(err) => {
+            render_redis_error(res, err);
             return;
         }
     };
@@ -158,14 +140,10 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     let today = Local::now().date_naive();
     let wins_key = format!("wins:{today}");
 
-    let wins_today: u64 = match conn.get::<_, Option<u64>>(&wins_key).await {
-        Ok(Some(v)) => v,
-        Ok(None) => 0,
-        Err(_) => {
-            res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-            res.render(Json(ErrorResponse {
-                error: "Redis error".into(),
-            }));
+    let wins_today: u64 = match redis_store::get_wins_today(&mut conn, &wins_key).await {
+        Ok(v) => v,
+        Err(err) => {
+            render_redis_error(res, err);
             return;
         }
     };
@@ -179,11 +157,8 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     };
 
     if is_win {
-        if let Err(_) = conn.incr::<_, _, u64>(&wins_key, 1).await {
-            res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-            res.render(Json(ErrorResponse {
-                error: "Redis error".into(),
-            }));
+        if let Err(err) = redis_store::increment_wins(&mut conn, &wins_key).await {
+            render_redis_error(res, err);
             return;
         }
     }
@@ -196,9 +171,7 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
         .unwrap();
     let seconds_until_midnight = (tomorrow_midnight - now.naive_local()).num_seconds();
     if seconds_until_midnight > 0 {
-        let _ = conn
-            .expire::<_, ()>(&wins_key, seconds_until_midnight)
-            .await;
+        let _ = redis_store::set_expiry(&mut conn, &wins_key, seconds_until_midnight).await;
     }
 
     res.render(Json(TryLuckResponse { win: is_win }));
@@ -212,4 +185,15 @@ fn extract_token(req: &Request) -> Option<String> {
         .ok()?
         .strip_prefix("Bearer ")
         .map(|s| s.to_string())
+}
+
+fn render_redis_error(res: &mut Response, err: RedisError) {
+    res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+    let message = match err {
+        RedisError::Unavailable => "Redis unavailable",
+        RedisError::Command => "Redis error",
+    };
+    res.render(Json(ErrorResponse {
+        error: message.into(),
+    }));
 }

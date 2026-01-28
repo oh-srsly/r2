@@ -4,6 +4,7 @@ use salvo::prelude::*;
 // Expose these modules publicly so tests can use the structs (LoginResponse, etc.)
 pub mod handlers;
 pub mod models;
+pub mod redis_store;
 pub mod state;
 
 use handlers::{health, login, logout, try_luck};
