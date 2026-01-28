@@ -1,1 +1,7 @@
-.idea/
+#  Jetbrains
+.idea
+
+# macOS #
+.DS_Store
+.AppleDouble
+.LSOverride
