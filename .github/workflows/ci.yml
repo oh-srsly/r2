@@ -13,7 +13,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./be-demo
+        working-directory: ./be-high-level
 
     steps:
       - uses: actions/checkout@v4

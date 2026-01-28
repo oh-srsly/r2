@@ -1,3 +1,5 @@
+name: r2
+
 services:
   gateway:
     depends_on:
@@ -12,5 +14,5 @@ services:
     build: ./web
     image: r2-web
   be:
-    build: ./be-demo
-    image: r2-be-demo
+    build: ./be-high-level
+    image: r2-be-python
