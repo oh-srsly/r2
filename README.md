@@ -8,6 +8,12 @@
   ```
 * Open [`http://localhost:8080`](http://localhost:8080) and try the website.
 
+## Solution
+This solution provides a Rust [Salvo](https://salvo.rs/)-based backend service implementation, with RFC-compatible email validation,
+and Redis (with persistence on) as a database for storing user logins and wins.
+
+GitHub actions are used to format, lint and test the code.
+
 ## Assignment
 The assignment is divided into phases, don't be fazed (🥁) if you don't complete all of them, they aren't all meant to be completed.  
 The website consits of a login page, and a homepage, where in the homepage you can win a prize.  
