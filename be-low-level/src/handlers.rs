@@ -1,5 +1,6 @@
 use chrono::Utc;
 use deadpool_redis::Connection;
+use log::{debug, error, info, warn};
 use rand::Rng;
 use salvo::prelude::*;
 use uuid::Uuid;
@@ -34,7 +35,12 @@ pub async fn login(req: &mut Request, dep: &mut Depot, res: &mut Response) {
         }
     };
 
+    info!("login attempt for {}", payload.email.as_str());
     if payload.password != state.password {
+        warn!(
+            "login failed: invalid credentials for {}",
+            payload.email.as_str()
+        );
         res.status_code(StatusCode::UNAUTHORIZED);
         res.render(Json(ErrorResponse {
             error: "Invalid credentials".into(),
@@ -54,6 +60,7 @@ pub async fn login(req: &mut Request, dep: &mut Depot, res: &mut Response) {
         return;
     }
 
+    info!("login success for {}", payload.email.as_str());
     res.render(Json(LoginResponse { token }));
 }
 
@@ -84,6 +91,7 @@ pub async fn logout(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     };
 
     if removed > 0 {
+        info!("logout success");
         res.render("OK");
     } else {
         render_unauthorized(res, "Invalid Token");
@@ -137,11 +145,16 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     } else {
         HIGH_WIN_RATE
     };
+    debug!(
+        "try_luck using probability {} with wins_today={}",
+        probability, wins_today
+    );
 
     let is_win: bool = {
         let mut rng = rand::rng();
         rng.random_bool(probability)
     };
+    debug!("try_luck outcome: win={}", is_win);
 
     if is_win && let Err(err) = redis_store::increment_wins(&mut conn, &wins_key).await {
         render_redis_error(res, err);
@@ -192,6 +205,7 @@ fn extract_token_or_unauthorized(
     match extract_token(req) {
         Some(token) => Some(token),
         None => {
+            warn!("unauthorized: {}", message);
             render_unauthorized(res, message);
             None
         }
@@ -211,6 +225,7 @@ fn render_redis_error(res: &mut Response, err: RedisError) {
         RedisError::Unavailable => "Redis unavailable",
         RedisError::Command => "Redis error",
     };
+    error!("redis error: {}", message);
     res.render(Json(ErrorResponse {
         error: message.into(),
     }));

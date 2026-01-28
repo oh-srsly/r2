@@ -1,5 +1,6 @@
 use deadpool_redis::{Config, Pool, Runtime};
 use salvo::prelude::*;
+use log::info;
 use std::path::Path;
 
 // Expose these modules publicly so tests can use the structs (LoginResponse, etc.)
@@ -34,6 +35,7 @@ pub async fn create_initial_state() -> AppState {
 
 fn load_password() -> String {
     if let Ok(password) = std::env::var("APP_PASSWORD") {
+        info!("loaded app password from APP_PASSWORD env");
         return password;
     }
 
@@ -45,6 +47,7 @@ fn load_password() -> String {
         );
     }
 
+    info!("loaded app password from secret file at {}", secret_path);
     std::fs::read_to_string(&secret_path)
         .unwrap_or_else(|err| panic!("Failed to read secret file {secret_path}: {err}"))
         .trim()

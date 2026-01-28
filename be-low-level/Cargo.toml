@@ -23,3 +23,7 @@ email_address = "0.2.9"
 # Redis
 deadpool-redis = "0.14"
 redis = { version = "0.25", features = ["tokio-comp"] }
+
+# Logging
+log = "0.4"
+env_logger = "0.11"
