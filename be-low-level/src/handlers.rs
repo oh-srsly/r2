@@ -1,4 +1,5 @@
 use chrono::Utc;
+use deadpool_redis::Connection;
 use rand::Rng;
 use salvo::prelude::*;
 use uuid::Uuid;
@@ -6,6 +7,10 @@ use uuid::Uuid;
 use crate::models::{ErrorResponse, LoginRequest, LoginResponse, TryLuckResponse};
 use crate::redis_store::{self, RedisError};
 use crate::state::AppState;
+
+const WIN_RATE_REDUCTION_THRESHOLD: u64 = 30;
+const HIGH_WIN_RATE: f64 = 0.7;
+const REDUCED_WIN_RATE: f64 = 0.4;
 
 #[handler]
 pub async fn health(_req: &mut Request, _dep: &mut Depot, res: &mut Response) {
@@ -39,12 +44,9 @@ pub async fn login(req: &mut Request, dep: &mut Depot, res: &mut Response) {
 
     let token = Uuid::new_v4().to_string();
 
-    let mut conn = match redis_store::get_connection(&state.redis_pool).await {
-        Ok(c) => c,
-        Err(err) => {
-            render_redis_error(res, err);
-            return;
-        }
+    let mut conn = match get_connection_or_respond(state, res).await {
+        Some(c) => c,
+        None => return,
     };
 
     if let Err(err) = redis_store::add_active_token(&mut conn, &token).await {
@@ -59,23 +61,18 @@ pub async fn login(req: &mut Request, dep: &mut Depot, res: &mut Response) {
 pub async fn logout(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     let state = dep.obtain::<AppState>().unwrap();
 
-    let token = match extract_token(req) {
+    let token = match extract_token_or_unauthorized(
+        req,
+        res,
+        "Missing or invalid Authorization header",
+    ) {
         Some(t) => t,
-        None => {
-            res.status_code(StatusCode::UNAUTHORIZED);
-            res.render(Json(ErrorResponse {
-                error: "Missing or invalid Authorization header".into(),
-            }));
-            return;
-        }
+        None => return,
     };
 
-    let mut conn = match redis_store::get_connection(&state.redis_pool).await {
-        Ok(c) => c,
-        Err(err) => {
-            render_redis_error(res, err);
-            return;
-        }
+    let mut conn = match get_connection_or_respond(state, res).await {
+        Some(c) => c,
+        None => return,
     };
 
     let removed: i32 = match redis_store::remove_active_token(&mut conn, &token).await {
@@ -89,10 +86,7 @@ pub async fn logout(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     if removed > 0 {
         res.render("OK");
     } else {
-        res.status_code(StatusCode::UNAUTHORIZED);
-        res.render(Json(ErrorResponse {
-            error: "Invalid Token".into(),
-        }));
+        render_unauthorized(res, "Invalid Token");
     }
 }
 
@@ -101,23 +95,14 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     let state = dep.obtain::<AppState>().unwrap();
 
     // 1. Auth Check
-    let token = match extract_token(req) {
+    let token = match extract_token_or_unauthorized(req, res, "Missing Authorization header") {
         Some(t) => t,
-        None => {
-            res.status_code(StatusCode::UNAUTHORIZED);
-            res.render(Json(ErrorResponse {
-                error: "Missing Authorization header".into(),
-            }));
-            return;
-        }
+        None => return,
     };
 
-    let mut conn = match redis_store::get_connection(&state.redis_pool).await {
-        Ok(c) => c,
-        Err(err) => {
-            render_redis_error(res, err);
-            return;
-        }
+    let mut conn = match get_connection_or_respond(state, res).await {
+        Some(c) => c,
+        None => return,
     };
 
     let is_member: bool = match redis_store::is_active_token(&mut conn, &token).await {
@@ -129,10 +114,7 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     };
 
     if !is_member {
-        res.status_code(StatusCode::UNAUTHORIZED);
-        res.render(Json(ErrorResponse {
-            error: "Invalid Token".into(),
-        }));
+        render_unauthorized(res, "Invalid Token");
         return;
     }
 
@@ -150,7 +132,11 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     };
 
     // Win Logic: 0.7 chance normally, 0.4 chance if >= 30 wins today
-    let probability = if wins_today >= 30 { 0.4 } else { 0.7 };
+    let probability = if wins_today >= WIN_RATE_REDUCTION_THRESHOLD {
+        REDUCED_WIN_RATE
+    } else {
+        HIGH_WIN_RATE
+    };
 
     let is_win: bool = {
         let mut rng = rand::rng();
@@ -183,6 +169,40 @@ fn extract_token(req: &Request) -> Option<String> {
         .ok()?
         .strip_prefix("Bearer ")
         .map(|s| s.to_string())
+}
+
+async fn get_connection_or_respond(
+    state: &AppState,
+    res: &mut Response,
+) -> Option<Connection> {
+    match redis_store::get_connection(&state.redis_pool).await {
+        Ok(c) => Some(c),
+        Err(err) => {
+            render_redis_error(res, err);
+            None
+        }
+    }
+}
+
+fn extract_token_or_unauthorized(
+    req: &Request,
+    res: &mut Response,
+    message: &str,
+) -> Option<String> {
+    match extract_token(req) {
+        Some(token) => Some(token),
+        None => {
+            render_unauthorized(res, message);
+            None
+        }
+    }
+}
+
+fn render_unauthorized(res: &mut Response, message: &str) {
+    res.status_code(StatusCode::UNAUTHORIZED);
+    res.render(Json(ErrorResponse {
+        error: message.into(),
+    }));
 }
 
 fn render_redis_error(res: &mut Response, err: RedisError) {
