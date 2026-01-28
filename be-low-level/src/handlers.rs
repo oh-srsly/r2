@@ -161,7 +161,7 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
         return;
     }
 
-    // Set expiry to next local midnight (idempotent; cheap if already set)
+    // Set expiry to the next midnight (idempotent; cheap if already set)
     let tomorrow_midnight = (now + chrono::Duration::days(1))
         .date_naive()
         .and_hms_opt(0, 0, 0)
