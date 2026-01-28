@@ -1,0 +1,30 @@
+use deadpool_redis::{Config, Pool, Runtime};
+use salvo::prelude::*;
+
+// Expose these modules publicly so tests can use the structs (LoginResponse, etc.)
+pub mod handlers;
+pub mod models;
+pub mod state;
+
+use handlers::{health, login, logout, try_luck};
+use state::AppState;
+
+pub fn build_router(state: AppState) -> Router {
+    Router::new()
+        .hoop(state)
+        .push(Router::with_path("api/health").get(health))
+        .push(Router::with_path("api/login").post(login))
+        .push(Router::with_path("api/logout").post(logout))
+        .push(Router::with_path("api/try_luck").post(try_luck))
+}
+
+// Helper to create a fresh state (useful for tests and main)
+pub async fn create_initial_state() -> AppState {
+    let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
+    let cfg = Config::from_url(redis_url);
+    let pool: Pool = cfg
+        .create_pool(Some(Runtime::Tokio1))
+        .expect("Failed to create Redis pool");
+
+    AppState { redis_pool: pool }
+}
