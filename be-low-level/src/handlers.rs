@@ -7,6 +7,7 @@ use uuid::Uuid;
 use crate::models::{ErrorResponse, LoginRequest, LoginResponse, TryLuckResponse};
 use crate::redis_store::{self, RedisError};
 use crate::state::AppState;
+use crate::PASSWORD;
 
 const WIN_RATE_REDUCTION_THRESHOLD: u64 = 30;
 const HIGH_WIN_RATE: f64 = 0.7;
@@ -34,7 +35,7 @@ pub async fn login(req: &mut Request, dep: &mut Depot, res: &mut Response) {
         }
     };
 
-    if payload.password != "r2isthebest" {
+    if payload.password != PASSWORD {
         res.status_code(StatusCode::UNAUTHORIZED);
         res.render(Json(ErrorResponse {
             error: "Invalid credentials".into(),

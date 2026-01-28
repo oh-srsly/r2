@@ -7,6 +7,8 @@ pub mod models;
 pub mod redis_store;
 pub mod state;
 
+pub const PASSWORD: &str = "r2isthebest";
+
 use handlers::{health, login, logout, try_luck};
 use state::AppState;
 

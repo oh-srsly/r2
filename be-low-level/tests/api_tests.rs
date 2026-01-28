@@ -1,6 +1,6 @@
 use be_low_level::models::{LoginResponse, TryLuckResponse};
 use be_low_level::state::AppState;
-use be_low_level::{build_router, create_initial_state};
+use be_low_level::{build_router, create_initial_state, PASSWORD};
 use salvo::prelude::*;
 use salvo::test::{ResponseExt, TestClient};
 
@@ -19,7 +19,7 @@ async fn test_full_user_flow() {
     let mut res = TestClient::post(format!("{BASE_URL}/api/login"))
         .json(&serde_json::json!({
             "email": "test@gmail.com",
-            "password": "r2isthebest"
+            "password": PASSWORD
         }))
         .send(router_with_state(&state))
         .await;
