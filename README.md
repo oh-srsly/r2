@@ -8,6 +8,12 @@
   ```
 * Open [`http://localhost:8080`](http://localhost:8080) and try the website.
 
+## Solution
+This solution provides a Python FastAPI-based backend service implementation, with RFC-compatible email validation,
+and no external/persistent storage. This specifically requires a single uvicorn worker.
+
+GitHub actions are used to format, lint and test the code.
+
 ## Assignment
 The assignment is divided into phases, don't be fazed (🥁) if you don't complete all of them, they aren't all meant to be completed.  
 The website consits of a login page, and a homepage, where in the homepage you can win a prize.  
@@ -61,4 +67,3 @@ Call it `be-low-level`.
   * Add CI that checks formatting, linting, typing, tests using `github-actions` or something else.
   * Improve `Dockerfile` to use `multistage builds`.  
   * Use some `cache layer` to store and update wins and loses.  
-
