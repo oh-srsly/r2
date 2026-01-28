@@ -5,7 +5,7 @@ use salvo::prelude::*;
 use salvo::test::{ResponseExt, TestClient};
 
 const BASE_URL: &str = "http://localhost";
-const TEST_PASSWORD: &str = "r2isthebest";
+const TEST_PASSWORD: &str = "TEST_PASSWORD";
 
 // Build a fresh router each time, but keep shared state across requests/tests.
 fn router_with_state(state: &AppState) -> Router {
