@@ -1,0 +1,12 @@
+use be_low_level::{build_router, create_initial_state};
+use salvo::prelude::*;
+
+#[tokio::main]
+async fn main() {
+    let state = create_initial_state().await;
+    let router = build_router(state);
+
+    println!("Listening on 0.0.0.0:8698");
+    let acceptor = TcpListener::new("0.0.0.0:8698").bind().await;
+    Server::new(acceptor).serve(router).await;
+}
