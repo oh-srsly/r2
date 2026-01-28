@@ -1,6 +1,6 @@
 use be_low_level::models::{LoginResponse, TryLuckResponse};
-use be_low_level::{build_router, create_initial_state};
 use be_low_level::state::AppState;
+use be_low_level::{build_router, create_initial_state};
 use salvo::prelude::*;
 use salvo::test::{ResponseExt, TestClient};
 

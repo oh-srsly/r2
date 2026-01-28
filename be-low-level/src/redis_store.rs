@@ -1,4 +1,4 @@
-use deadpool_redis::{redis::AsyncCommands, Connection, Pool};
+use deadpool_redis::{Connection, Pool, redis::AsyncCommands};
 
 #[derive(Debug)]
 pub enum RedisError {
@@ -17,10 +17,7 @@ pub async fn add_active_token(conn: &mut Connection, token: &str) -> Result<(), 
         .map_err(|_| RedisError::Command)
 }
 
-pub async fn remove_active_token(
-    conn: &mut Connection,
-    token: &str,
-) -> Result<i32, RedisError> {
+pub async fn remove_active_token(conn: &mut Connection, token: &str) -> Result<i32, RedisError> {
     conn.srem("active_tokens", token)
         .await
         .map_err(|_| RedisError::Command)
