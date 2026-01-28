@@ -10,7 +10,7 @@
 
 ## Solution
 This solution provides a Python FastAPI-based backend service implementation, with RFC-compatible email validation,
-and no external/persistent storage. This specifically requires a single uvicorn worker.
+and no external/persistent storage. This specifically requires a single uvicorn worker (see [Dockerfile](be-high-level/Dockerfile)) and will not work otherwise.
 
 GitHub actions are used to format, lint and test the code.
 
