@@ -156,11 +156,9 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
         rng.random_bool(probability)
     };
 
-    if is_win {
-        if let Err(err) = redis_store::increment_wins(&mut conn, &wins_key).await {
-            render_redis_error(res, err);
-            return;
-        }
+    if is_win && let Err(err) = redis_store::increment_wins(&mut conn, &wins_key).await {
+        render_redis_error(res, err);
+        return;
     }
 
     // Set expiry to next local midnight (idempotent; cheap if already set)
