@@ -5,3 +5,6 @@
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# in reality we will omit secrets/
+# secrets

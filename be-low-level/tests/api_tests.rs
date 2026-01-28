@@ -1,10 +1,11 @@
 use be_low_level::models::{LoginResponse, TryLuckResponse};
 use be_low_level::state::AppState;
-use be_low_level::{build_router, create_initial_state, PASSWORD};
+use be_low_level::{build_router, create_initial_state};
 use salvo::prelude::*;
 use salvo::test::{ResponseExt, TestClient};
 
 const BASE_URL: &str = "http://localhost";
+const TEST_PASSWORD: &str = "r2isthebest";
 
 // Build a fresh router each time, but keep shared state across requests/tests.
 fn router_with_state(state: &AppState) -> Router {
@@ -13,13 +14,14 @@ fn router_with_state(state: &AppState) -> Router {
 
 #[tokio::test]
 async fn test_full_user_flow() {
+    unsafe { std::env::set_var("APP_PASSWORD", TEST_PASSWORD); }
     let state = create_initial_state().await;
 
     // 1. Login
     let mut res = TestClient::post(format!("{BASE_URL}/api/login"))
         .json(&serde_json::json!({
             "email": "test@gmail.com",
-            "password": PASSWORD
+            "password": TEST_PASSWORD
         }))
         .send(router_with_state(&state))
         .await;
@@ -49,6 +51,7 @@ async fn test_full_user_flow() {
 
 #[tokio::test]
 async fn test_invalid_credentials() {
+    unsafe { std::env::set_var("APP_PASSWORD", TEST_PASSWORD); }
     let state = create_initial_state().await;
 
     let res = TestClient::post(format!("{BASE_URL}/api/login"))

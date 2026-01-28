@@ -6,6 +6,7 @@ use chrono::{NaiveDate, Utc};
 #[derive(Clone)]
 pub struct AppState {
     pub redis_pool: Pool,
+    pub password: String,
 }
 
 // Implement Handler so we can .hoop(state)

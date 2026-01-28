@@ -20,6 +20,8 @@ services:
       - redis
     environment:
       - REDIS_URL=redis://redis:6379
+    secrets:
+      - app_password
   redis:
     container_name: redis
     image: redis:7-alpine
@@ -33,3 +35,7 @@ services:
 volumes:
   redis_data:
     driver: local
+
+secrets:
+  app_password:
+    file: ./secrets/app_password.txt

@@ -10,7 +10,8 @@
 
 ## Solution
 This solution provides a Rust [Salvo](https://salvo.rs/)-based backend service implementation, with RFC-compatible email validation,
-and Redis (with persistence on) as a database for storing user logins and wins.
+and Redis (with persistence on) as a database for storing user logins and wins. The password to the backend is stored in a secret file,
+which is committed to the repository only for the sake of demonstration.
 
 GitHub actions are used to format, lint and test the code.
 
