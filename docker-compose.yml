@@ -12,5 +12,22 @@ services:
     build: ./web
     image: r2-web
   be:
-    build: ./be-demo
-    image: r2-be-demo
+    build: ./be-low-level
+    image: r2-be-rust
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    # Enable Append Only File for durability (AOF)
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+
+volumes:
+  redis_data:
+    driver: local
