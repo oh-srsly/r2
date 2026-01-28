@@ -1,0 +1,25 @@
+[package]
+name = "be-low-level"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Salvo: The web framework (includes server, router, and http handling)
+salvo = { version = "0.88.1", features = ["anyhow", "serve-static"] }
+
+# Tokio: The async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Serde: For JSON serialization/deserialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Utils
+uuid = { version = "1.0", features = ["v4"] } # For generating tokens
+chrono = "0.4"    # For date/time handling
+rand = "0.9.2"      # For the win/loss logic
+email_address = "0.2.9"
+
+# Redis
+deadpool-redis = "0.14"
+redis = { version = "0.25", features = ["tokio-comp"] }
