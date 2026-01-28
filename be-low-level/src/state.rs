@@ -1,7 +1,7 @@
 use deadpool_redis::Pool;
 use salvo::prelude::*;
 
-use chrono::{Local, NaiveDate};
+use chrono::{NaiveDate, Utc};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -31,7 +31,7 @@ impl GameState {
     pub fn new() -> Self {
         Self {
             wins_today: 0,
-            last_reset_date: Local::now().date_naive(),
+            last_reset_date: Utc::now().date_naive(),
         }
     }
 }

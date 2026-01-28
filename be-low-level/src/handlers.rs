@@ -1,4 +1,4 @@
-use chrono::Local;
+use chrono::Utc;
 use rand::Rng;
 use salvo::prelude::*;
 use uuid::Uuid;
@@ -137,7 +137,8 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     }
 
     // 2. Game Logic
-    let today = Local::now().date_naive();
+    let now = Utc::now();
+    let today = now.date_naive();
     let wins_key = format!("wins:{today}");
 
     let wins_today: u64 = match redis_store::get_wins_today(&mut conn, &wins_key).await {
@@ -162,12 +163,11 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     }
 
     // Set expiry to next local midnight (idempotent; cheap if already set)
-    let now = Local::now();
     let tomorrow_midnight = (now + chrono::Duration::days(1))
         .date_naive()
         .and_hms_opt(0, 0, 0)
         .unwrap();
-    let seconds_until_midnight = (tomorrow_midnight - now.naive_local()).num_seconds();
+    let seconds_until_midnight = (tomorrow_midnight - now.naive_utc()).num_seconds();
     if seconds_until_midnight > 0 {
         let _ = redis_store::set_expiry(&mut conn, &wins_key, seconds_until_midnight).await;
     }
