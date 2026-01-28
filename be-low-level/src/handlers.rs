@@ -68,14 +68,11 @@ pub async fn login(req: &mut Request, dep: &mut Depot, res: &mut Response) {
 pub async fn logout(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     let state = dep.obtain::<AppState>().unwrap();
 
-    let token = match extract_token_or_unauthorized(
-        req,
-        res,
-        "Missing or invalid Authorization header",
-    ) {
-        Some(t) => t,
-        None => return,
-    };
+    let token =
+        match extract_token_or_unauthorized(req, res, "Missing or invalid Authorization header") {
+            Some(t) => t,
+            None => return,
+        };
 
     let mut conn = match get_connection_or_respond(state, res).await {
         Some(c) => c,
@@ -180,10 +177,7 @@ fn extract_token(req: &Request) -> Option<String> {
         .map(|s| s.to_string())
 }
 
-async fn get_connection_or_respond(
-    state: &AppState,
-    res: &mut Response,
-) -> Option<Connection> {
+async fn get_connection_or_respond(state: &AppState, res: &mut Response) -> Option<Connection> {
     match redis_store::get_connection(&state.redis_pool).await {
         Ok(c) => Some(c),
         Err(err) => {

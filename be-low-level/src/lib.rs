@@ -1,6 +1,6 @@
 use deadpool_redis::{Config, Pool, Runtime};
-use salvo::prelude::*;
 use log::info;
+use salvo::prelude::*;
 use std::path::Path;
 
 // Expose these modules publicly so tests can use the structs (LoginResponse, etc.)
@@ -30,7 +30,10 @@ pub async fn create_initial_state() -> AppState {
         .expect("Failed to create Redis pool");
 
     let password = load_password();
-    AppState { redis_pool: pool, password }
+    AppState {
+        redis_pool: pool,
+        password,
+    }
 }
 
 fn load_password() -> String {

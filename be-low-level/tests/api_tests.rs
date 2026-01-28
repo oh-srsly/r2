@@ -14,7 +14,9 @@ fn router_with_state(state: &AppState) -> Router {
 
 #[tokio::test]
 async fn test_full_user_flow() {
-    unsafe { std::env::set_var("APP_PASSWORD", TEST_PASSWORD); }
+    unsafe {
+        std::env::set_var("APP_PASSWORD", TEST_PASSWORD);
+    }
     let state = create_initial_state().await;
 
     // 1. Login
@@ -51,7 +53,9 @@ async fn test_full_user_flow() {
 
 #[tokio::test]
 async fn test_invalid_credentials() {
-    unsafe { std::env::set_var("APP_PASSWORD", TEST_PASSWORD); }
+    unsafe {
+        std::env::set_var("APP_PASSWORD", TEST_PASSWORD);
+    }
     let state = create_initial_state().await;
 
     let res = TestClient::post(format!("{BASE_URL}/api/login"))
