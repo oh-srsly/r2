@@ -102,7 +102,6 @@ pub async fn logout(req: &mut Request, dep: &mut Depot, res: &mut Response) {
 pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     let state = dep.obtain::<AppState>().unwrap();
 
-    // 1. Auth Check
     let token = match extract_token_or_unauthorized(req, res, "Missing Authorization header") {
         Some(t) => t,
         None => return,
@@ -126,7 +125,6 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
         return;
     }
 
-    // 2. Game Logic
     let now = Utc::now();
     let today = now.date_naive();
     let wins_key = format!("wins:{today}");
@@ -139,7 +137,6 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
         }
     };
 
-    // Win Logic: 0.7 chance normally, 0.4 chance if >= 30 wins today
     let probability = if wins_today >= WIN_RATE_REDUCTION_THRESHOLD {
         REDUCED_WIN_RATE
     } else {
@@ -174,7 +171,6 @@ pub async fn try_luck(req: &mut Request, dep: &mut Depot, res: &mut Response) {
     res.render(Json(TryLuckResponse { win: is_win }));
 }
 
-// Helper to parse "Bearer <token>"
 fn extract_token(req: &Request) -> Option<String> {
     req.headers()
         .get("Authorization")?

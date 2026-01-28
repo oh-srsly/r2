@@ -7,7 +7,7 @@ use salvo::test::{ResponseExt, TestClient};
 const BASE_URL: &str = "http://localhost";
 const TEST_PASSWORD: &str = "TEST_PASSWORD";
 
-// Build a fresh router each time, but keep shared state across requests/tests.
+// Build a fresh router each time but keep a shared state across requests/tests.
 fn router_with_state(state: &AppState) -> Router {
     build_router(state.clone())
 }
